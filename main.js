@@ -2,14 +2,19 @@ import * as THREE from 'three';
 import { CameraController } from './Controllers/cameraController.js';
 import { setupScene } from './scenes/LevelOne.js';
 
-const scene = setupScene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-const cameraController = new CameraController(camera, scene);
+// --- Setup scene and walls ---
+const { scene, walls } = setupScene();
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 500);
+
+// Pass walls array to CameraController for collisions
+const cameraController = new CameraController(camera, scene, walls);
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+// --- Prevent zoom ---
 window.addEventListener('wheel', e => e.preventDefault(), { passive: false });
 
 // --- WINDOW RESIZE LOGIC ---
