@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { CameraController } from './Controllers/cameraController.js';
+import { CameraController } from './Controllers/CameraController.js';
+import { createRenderer } from './core/renderer.js';
 import { setupScene } from './scenes/LevelOne.js';
 
 // --- Setup scene and walls ---
@@ -10,9 +11,7 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 // Pass walls array to CameraController for collisions
 const cameraController = new CameraController(camera, scene, walls);
 
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+const renderer = createRenderer();
 
 // --- Prevent zoom ---
 window.addEventListener('wheel', e => e.preventDefault(), { passive: false });
@@ -24,10 +23,6 @@ window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-function animate() {
-    requestAnimationFrame(animate);
-    cameraController.update();
-    renderer.render(scene, camera);
-}
+function animate() { requestAnimationFrame(animate); cameraController.update(); renderer.render(scene, camera); }
 
 animate();
