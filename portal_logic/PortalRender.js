@@ -109,10 +109,10 @@ export class PortalRenderer {
     }
 
     // Temporarily hide environment to avoid clutter in portal view
-    const originalEnvironment = this.scene.environment;
-    const originalBackground = this.scene.background;
-    this.scene.environment = null;
-    this.scene.background = new THREE.Color(0x000000);
+    // const originalEnvironment = this.scene.environment;
+    // const originalBackground = this.scene.background;
+    // this.scene.environment = null;
+    // this.scene.background = new THREE.Color(0x000000);
 
     // === Render Blue Portal View ===
     this.renderPortalView(
@@ -137,8 +137,8 @@ export class PortalRenderer {
     );
 
     // Restore scene settings
-    this.scene.environment = originalEnvironment;
-    this.scene.background = originalBackground;
+    // this.scene.environment = originalEnvironment;
+    // this.scene.background = originalBackground;
 
     // Reset to default render target
     this.renderer.setRenderTarget(null);

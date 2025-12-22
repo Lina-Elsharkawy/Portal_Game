@@ -17,7 +17,7 @@ export class PortalTeleport {
     this.teleportCooldown = 0;
     this.cooldownDuration = 0.5; // half second cooldown
     this.lastTeleportTime = 0;
-    
+
     // Track which portal we last teleported from to prevent ping-ponging
     this.lastPortalUsed = null;
   }
@@ -39,7 +39,7 @@ export class PortalTeleport {
     // Check distance to each portal
     const distToBlue = this.player.position.distanceTo(bluePortal.point);
     const distToOrange = this.player.position.distanceTo(orangePortal.point);
-    
+
     const teleportRadius = 1.5; // Distance threshold for teleportation
 
     // Blue → Orange teleport
@@ -56,10 +56,10 @@ export class PortalTeleport {
     // Calculate exit position based on portal normal
     const exitOffset = destinationPortal.normal.clone().multiplyScalar(2);
     const newPosition = destinationPortal.point.clone().add(exitOffset);
-    
+
     // Set new position
     this.player.position.copy(newPosition);
-    
+
     // Update previous position to prevent collision glitches
     if (this.collisionController) {
       this.collisionController.player.prevPosition = this.player.position.clone();
@@ -69,13 +69,13 @@ export class PortalTeleport {
     // Set cooldown and track which portal we used
     this.teleportCooldown = this.cooldownDuration;
     this.lastPortalUsed = portalName;
-    
+
     // Clear the last portal after a bit longer to allow re-entry from same side
     setTimeout(() => {
       if (this.lastPortalUsed === portalName) {
         this.lastPortalUsed = null;
       }
     }, this.cooldownDuration * 1000 + 200);
-    
+
   }
 }

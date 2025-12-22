@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 export class PortalHalo {
   constructor(color = 0x0000ff, radius = 1.0, thickness = 0.15) {
+    // 2.0 radius makes it roughly 4 meters tall.
     const geometry = new THREE.RingGeometry(radius, radius + thickness, 64);
     const material = new THREE.MeshBasicMaterial({
       color: color,

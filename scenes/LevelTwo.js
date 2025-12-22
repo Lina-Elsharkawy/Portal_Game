@@ -4,6 +4,7 @@ import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { buildRoom } from './Room.js';
 import { buildCorridor } from './Corridor.js';
 import { createLabWallMaterial, createMetalWallMaterial, createMetalFloorMaterial, createCeiling2Material } from '../textures/materials_TextureMapping.js';
+import { DraggableCube, FloorButton, Door } from '../puzzle_logic/PuzzleObjects.js';
 
 export function setupScene() {
     const scene = new THREE.Scene();
@@ -75,6 +76,20 @@ export function setupScene() {
     scene.add(r2Filler2);
     allWalls.push(r2Filler2);
 
+    // --- PUZZLE SETUP ---
+    // 1. Door at the end of the corridor (blocking Room 2)
+    // Corridor ends at x=100.
+    const door = new Door(scene, new THREE.Vector3(100, 0, 0));
+
+    // 2. Button in Room 1
+    // Room 1 center is (0,0,0). Let's put button at (-10, 0, 0)
+    const button = new FloorButton(scene, new THREE.Vector3(-10, 0.1, 0), door);
+
+    // 3. Cube in Room 1
+    // Put it nearby
+    const cube = new DraggableCube(scene, new THREE.Vector3(5, 2, 0));
+
+
     // --- Finalize Matrices for Collision ---
     scene.updateMatrixWorld(true);
 
@@ -88,5 +103,5 @@ export function setupScene() {
         scene.environment = texture;
     }, undefined, error => console.error('EXR failed to load:', error));
 
-    return { scene, walls: allWalls };
+    return { scene, walls: allWalls, puzzle: { door, button, cube } };
 }

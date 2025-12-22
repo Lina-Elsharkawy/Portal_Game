@@ -5,16 +5,16 @@ import { MouseController } from './MouseController.js';
 import { CollisionController } from './collisionController.js';
 
 export class CameraController {
-  constructor(camera, scene, walls) {
+  constructor(camera, scene, walls, dynamicObjects = []) {
     this.camera = camera;
     this.player = new PlayerController(camera);
-  
+
     scene.add(this.player.getObject());
 
     this.keyboard = new KeyboardController();
     this.mouse = new MouseController(this.player.getObject(), camera);
 
-    this.collision = new CollisionController(this.player.getObject(), walls);
+    this.collision = new CollisionController(this.player.getObject(), walls, dynamicObjects);
     this.player.getObject().prevPosition = this.player.getObject().position.clone();
 
     this.clock = new THREE.Clock();
