@@ -8,12 +8,12 @@ export function buildCorridor(length = 80, width = 10, height = 10, options = { 
     // Floor
     const floorSize = width;
     const floor = createFloor(floorSize);
-    floor.scale.z = length / width;
+    floor.scale.y = length / width; // Corrected from z to y
     corridor.add(floor);
 
     // Ceiling
     const ceiling = createCeiling(floorSize, height);
-    ceiling.scale.z = length / width;
+    ceiling.scale.y = length / width; // Corrected from z to y
     corridor.add(ceiling);
 
     // Walls

@@ -8,13 +8,13 @@ export class PortalRenderer {
     this.renderer = renderer;
     this.scene = scene;
     this.mainCamera = mainCamera;
-    
+
     // CRITICAL: Enable stencil buffer in main renderer
     const gl = renderer.getContext();
     if (gl.getContextAttributes().stencil === false) {
       console.warn('Stencil buffer not available - portal clipping will not work');
     }
-    
+
     // Render targets with stencil buffer enabled
     const renderTargetSize = 512;
     const rtOptions = {
@@ -24,21 +24,29 @@ export class PortalRenderer {
       stencilBuffer: true,
       depthBuffer: true
     };
-    
+
     this.blueRenderTarget = new THREE.WebGLRenderTarget(renderTargetSize, renderTargetSize, rtOptions);
     this.orangeRenderTarget = new THREE.WebGLRenderTarget(renderTargetSize, renderTargetSize, rtOptions);
-    
+
     // Portal cameras
-    this.blueCamera = new PortalCamera();
-    this.orangeCamera = new PortalCamera();
-    
+    this.blueCamera = new PortalCamera(mainCamera);
+    this.orangeCamera = new PortalCamera(mainCamera);
+
     // Portal display components
     this.bluePortalMesh = null;
     this.orangePortalMesh = null;
     this.blueStencilMask = null;
     this.orangeStencilMask = null;
   }
-  
+
+  /**
+   * Update resolution for shaders
+   */
+  setSize(width, height) {
+    if (this.bluePortalMesh) this.bluePortalMesh.setSize(width, height);
+    if (this.orangePortalMesh) this.orangePortalMesh.setSize(width, height);
+  }
+
   /**
    * Create portal display components (mesh + stencil mask)
    */
@@ -63,17 +71,17 @@ export class PortalRenderer {
         this.orangeStencilMask.dispose();
       }
     }
-    
+
     // Create new stencil mask
     const mask = new PortalStencilMask(1.0, 0.15);
     mask.setPositionAndOrientation(portalData.point, portalData.normal);
     this.scene.add(mask.mesh);
-    
-    // Create new portal mesh
-    const mesh = new PortalMesh(renderTarget, 3, 4);
+
+    // Create new portal mesh with screen-space shader
+    const mesh = new PortalMesh(renderTarget);
     mesh.setPositionAndOrientation(portalData.point, portalData.normal);
     this.scene.add(mesh.mesh);
-    
+
     if (isBlue) {
       this.blueStencilMask = mask;
       this.bluePortalMesh = mesh;
@@ -82,7 +90,7 @@ export class PortalRenderer {
       this.orangePortalMesh = mesh;
     }
   }
-  
+
   /**
    * Render portal views
    */
@@ -91,7 +99,7 @@ export class PortalRenderer {
     if (!blueActive || !orangeActive || !bluePortalData || !orangePortalData) {
       return;
     }
-    
+
     // Create portal components if needed
     if (!this.bluePortalMesh) {
       this.createPortalComponents(bluePortalData, this.orangeRenderTarget, true);
@@ -99,14 +107,14 @@ export class PortalRenderer {
     if (!this.orangePortalMesh) {
       this.createPortalComponents(orangePortalData, this.blueRenderTarget, false);
     }
-    
-    // Disable environment map for portal renders
+
+    // Temporarily hide environment to avoid clutter in portal view
     const originalEnvironment = this.scene.environment;
     const originalBackground = this.scene.background;
     this.scene.environment = null;
     this.scene.background = new THREE.Color(0x000000);
-    
-    // === Render Blue Portal View (what you see through blue portal) ===
+
+    // === Render Blue Portal View ===
     this.renderPortalView(
       playerCamera,
       bluePortalData,
@@ -116,8 +124,8 @@ export class PortalRenderer {
       this.orangePortalMesh,
       this.orangeStencilMask
     );
-    
-    // === Render Orange Portal View (what you see through orange portal) ===
+
+    // === Render Orange Portal View ===
     this.renderPortalView(
       playerCamera,
       orangePortalData,
@@ -127,44 +135,52 @@ export class PortalRenderer {
       this.bluePortalMesh,
       this.blueStencilMask
     );
-    
+
     // Restore scene settings
     this.scene.environment = originalEnvironment;
     this.scene.background = originalBackground;
-    
+
     // Reset to default render target
     this.renderer.setRenderTarget(null);
   }
-  
+
   /**
    * Helper to render a single portal view
    */
   renderPortalView(playerCamera, sourcePortal, destPortal, portalCamera, renderTarget, portalMesh, stencilMask) {
-    // Hide the destination portal to prevent recursion
-    const meshVisible = portalMesh ? portalMesh.mesh.visible : false;
-    const maskVisible = stencilMask ? stencilMask.mesh.visible : false;
-    
-    if (portalMesh) portalMesh.setVisible(false);
-    if (stencilMask) stencilMask.setVisible(false);
-    
-    // Update portal camera
+    // Hide BOTH portal meshes to avoid recursion and self-occlusion
+    const blueVisible = this.bluePortalMesh ? this.bluePortalMesh.mesh.visible : false;
+    const orangeVisible = this.orangePortalMesh ? this.orangePortalMesh.mesh.visible : false;
+
+    if (this.bluePortalMesh) this.bluePortalMesh.setVisible(false);
+    if (this.orangePortalMesh) this.orangePortalMesh.setVisible(false);
+    // Masks can stay visible as they don't block virtual camera usually
+
+    // Update portal camera with advanced oblique projection
     portalCamera.updateFromPortals(
-      playerCamera.position,
-      playerCamera.quaternion,
+      playerCamera,
       sourcePortal,
       destPortal
     );
-    
+
     // Render to target
+    const originalClearColor = new THREE.Color();
+    this.renderer.getClearColor(originalClearColor);
+    const originalClearAlpha = this.renderer.getClearAlpha();
+
     this.renderer.setRenderTarget(renderTarget);
-    this.renderer.clear(true, true, true); // Clear color, depth, and stencil
+    this.renderer.setClearColor(0x000000, 1);
+    this.renderer.clear(true, true, true);
     this.renderer.render(this.scene, portalCamera.camera);
-    
+
+    // Restore renderer state
+    this.renderer.setClearColor(originalClearColor, originalClearAlpha);
+
     // Restore visibility
-    if (portalMesh) portalMesh.setVisible(meshVisible);
-    if (stencilMask) stencilMask.setVisible(maskVisible);
+    if (this.bluePortalMesh) this.bluePortalMesh.setVisible(blueVisible);
+    if (this.orangePortalMesh) this.orangePortalMesh.setVisible(orangeVisible);
   }
-  
+
   /**
    * Update portal positions when moved
    */
@@ -176,14 +192,14 @@ export class PortalRenderer {
       this.createPortalComponents(orangePortalData, this.blueRenderTarget, false);
     }
   }
-  
+
   /**
    * Cleanup
    */
   dispose() {
     this.blueRenderTarget.dispose();
     this.orangeRenderTarget.dispose();
-    
+
     if (this.bluePortalMesh) {
       this.scene.remove(this.bluePortalMesh.mesh);
       this.bluePortalMesh.dispose();

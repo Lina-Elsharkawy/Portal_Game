@@ -6,7 +6,7 @@ export class PortalHalo {
     const material = new THREE.MeshBasicMaterial({
       color: color,
       transparent: true,
-      opacity: 0.9, 
+      opacity: 0.9,
       side: THREE.DoubleSide,
       depthWrite: false,
       blending: THREE.AdditiveBlending, // new: glow effect
@@ -36,7 +36,7 @@ export class PortalHalo {
   }
 
   setPositionAndOrientation(position, normal) {
-    const offset = normal.clone().multiplyScalar(0.02); 
+    const offset = normal.clone().multiplyScalar(0.03);
     this.mesh.position.copy(position).add(offset);
     const quaternion = new THREE.Quaternion().setFromUnitVectors(
       new THREE.Vector3(0, 0, 1),

@@ -1,46 +1,75 @@
 import * as THREE from 'three';
 
 export class PortalMesh {
-  constructor(renderTarget, width = 3, height = 4) {
-    // Larger plane to cover full portal area
-    const geometry = new THREE.PlaneGeometry(width, height);
-    
-    const material = new THREE.MeshBasicMaterial({
-      map: renderTarget.texture,
-      side: THREE.DoubleSide,
-      transparent: false
+  constructor(renderTarget) {
+    // Geometry can be a simple plane - shader handles projection
+    // We make it slightly larger to ensure coverage if oblique clipping misses edge
+    const geometry = new THREE.PlaneGeometry(10, 10);
+
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        map: { value: renderTarget.texture },
+        resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+      },
+      vertexShader: `
+        varying vec4 vClipPosition;
+        void main() {
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          vClipPosition = gl_Position;
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D map;
+        uniform vec2 resolution;
+        
+        void main() {
+          // Calculate screen screen UV coordinates (0..1)
+          vec2 screenUV = gl_FragCoord.xy / resolution;
+          
+          // Sample the portal texture
+          vec4 color = texture2D(map, screenUV);
+          
+          gl_FragColor = color;
+        }
+      `
     });
-    
-    // Configure stencil test - only render where stencil = 1
-    material.stencilWrite = false;
+
+    // Stencil configuration
+    material.stencilWrite = true;
     material.stencilFunc = THREE.EqualStencilFunc;
     material.stencilRef = 1;
     material.stencilFail = THREE.KeepStencilOp;
     material.stencilZFail = THREE.KeepStencilOp;
     material.stencilZPass = THREE.KeepStencilOp;
-    
+    material.side = THREE.DoubleSide;
+
     this.mesh = new THREE.Mesh(geometry, material);
     this.mesh.renderOrder = 0; // Render after mask
   }
-  
+
   setPositionAndOrientation(position, normal) {
     this.mesh.position.copy(position);
-    
+
     const quaternion = new THREE.Quaternion().setFromUnitVectors(
       new THREE.Vector3(0, 0, 1),
       normal
     );
     this.mesh.quaternion.copy(quaternion);
-    
-    // Slight offset to prevent z-fighting
-    const offset = normal.clone().multiplyScalar(0.01);
+
+    // Offset
+    const offset = normal.clone().multiplyScalar(0.02);
     this.mesh.position.add(offset);
   }
-  
+
   setVisible(visible) {
     this.mesh.visible = visible;
   }
-  
+
+  // Update resolution uniform
+  setSize(width, height) {
+    this.mesh.material.uniforms.resolution.value.set(width, height);
+  }
+
   dispose() {
     this.mesh.geometry.dispose();
     this.mesh.material.dispose();

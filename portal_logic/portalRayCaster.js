@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 export class PortalRaycaster {
-  constructor(maxDistance = 50, muzzleOffset = new THREE.Vector3(0.2, -0.3, -1.2)) {
+  constructor(maxDistance = 1000, muzzleOffset = new THREE.Vector3(0.2, -0.3, -1.2)) {
     this.maxDistance = maxDistance;
     this.muzzleOffset = muzzleOffset; // relative to camera
     this.raycaster = new THREE.Raycaster();

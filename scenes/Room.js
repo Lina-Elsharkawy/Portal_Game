@@ -7,19 +7,19 @@ export function buildRoom(size = 40, height = 10, options = {
     showFront: true,
     showLeft: true,
     showRight: true
-}) {
+}, wallMaterial, floorMaterial, ceilingMaterial) {
     const room = new THREE.Group();
 
     // Floor
-    const floor = createFloor(size);
+    const floor = createFloor(size, floorMaterial);
     room.add(floor);
 
     // Ceiling
-    const ceiling = createCeiling(size, height);
+    const ceiling = createCeiling(size, height, ceilingMaterial);
     room.add(ceiling);
 
     // Walls
-    const allWalls = createWalls(size, height);
+    const allWalls = createWalls(size, height, wallMaterial);
     // walls are usually returned as [back, front, left, right] based on createWalls implementation
     if (options.showBack) room.add(allWalls[0]);
     if (options.showFront) room.add(allWalls[1]);
