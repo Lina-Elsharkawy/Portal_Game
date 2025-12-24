@@ -11,7 +11,7 @@ export function setupScene() {
     scene.userData.spikes = [];
 
     // --- LIGHTING ---
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0); 
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1); 
     scene.add(ambientLight);
     scene.userData.ambientLight = ambientLight;
 
