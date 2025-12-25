@@ -6,7 +6,7 @@ export class PlayerController {
         this.player = new THREE.Object3D();
         this.camera = camera;
         
-        this.camera.position.set(0, 1.6, 0);
+        this.camera.position.set(0, 2.5, 0);
         this.player.add(this.camera);
         
         // Physics

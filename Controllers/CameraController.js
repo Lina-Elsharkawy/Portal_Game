@@ -21,7 +21,7 @@ export class CameraController {
 
         // CollisionController ONLY handles Walls (horizontal collisions)
         // We do NOT pass floors here, or the player will get stuck.
-        this.collision = new CollisionController(this.player.getObject(), walls, []); 
+        this.collision = new CollisionController(this.player.getObject(), walls, [], scene); 
         
         this.player.getObject().prevPosition = this.player.getObject().position.clone();
         // this.clock = new THREE.Clock();
