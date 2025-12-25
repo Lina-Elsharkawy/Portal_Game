@@ -24,11 +24,11 @@ export class CameraController {
         this.collision = new CollisionController(this.player.getObject(), walls, []); 
         
         this.player.getObject().prevPosition = this.player.getObject().position.clone();
-        this.clock = new THREE.Clock();
+        // this.clock = new THREE.Clock();
+        // temp remove clock for bug fix
     }
 
-    update() {
-        const delta = this.clock.getDelta();
+    update(delta) {
         
         // Save position BEFORE movement for wall collision rollback
         const playerObj = this.player.getObject();

@@ -129,9 +129,10 @@ const clock = new THREE.Clock();
 // UPDATED: animate function
 function animate() {
   requestAnimationFrame(animate);
-  const deltaTime = clock.getDelta();
+  const rawDelta = clock.getDelta();
+  const deltaTime = Math.min(rawDelta, 0.05); // Cap deltaTime to avoid large jumps
 
-  cameraController.update();
+  cameraController.update(deltaTime);
   portalTeleport.update(deltaTime);
 
   // Portal raycaster can hit both walls and floors
