@@ -12,9 +12,8 @@ export class PlayerController {
         // Physics
         this.velocity = new THREE.Vector3();
         
-        // --- CRITICAL FIX: Link velocity to the Mesh so PortalTeleport can find it ---
+        // LINK VELOCITY so PortalTeleport sees it
         this.player.velocity = this.velocity; 
-        // -----------------------------------------------------------------------------
 
         this.direction = new THREE.Vector3();
         this.speed = 8; 
@@ -54,7 +53,7 @@ export class PlayerController {
 
     getObject() { return this.player; }
 
-    // Standard movement (WASD) - Independent of momentum
+    // WASD Movement (Direct Translation)
     moveForward(distance) { this.player.translateZ(-distance); }
     moveRight(distance) { this.player.translateX(distance); }
 
@@ -69,26 +68,22 @@ export class PlayerController {
         // 1. Apply Gravity
         this.velocity.y += this.gravity * delta;
 
-        // 2. Apply Air Resistance / Ground Friction to Horizontal Momentum
-        // This ensures the "fling" eventually slows down
-        const drag = this.onGround ? 5.0 : 0.5; // High friction on ground, low in air
-        this.velocity.x -= this.velocity.x * drag * delta;
-        this.velocity.z -= this.velocity.z * drag * delta;
+        // [REMOVED] Friction/Drag Step
+        // We removed the drag calculation so momentum is perfectly preserved in the air.
 
-        // Clean up tiny values to stop sliding
-        if (Math.abs(this.velocity.x) < 0.1) this.velocity.x = 0;
-        if (Math.abs(this.velocity.z) < 0.1) this.velocity.z = 0;
-
-        // 3. Apply Velocity to Position (This makes the Fling happen!)
+        // 2. Apply Velocity to Position
+        // This moves the player based on the portal fling or gravity
         this.player.position.x += this.velocity.x * delta;
         this.player.position.z += this.velocity.z * delta;
         this.player.position.y += this.velocity.y * delta;
 
-        // 4. Ground Detection
+        // 3. Ground Detection
         const rayOrigin = this.player.position.clone();
         rayOrigin.y += 1.0; 
         
         this.raycaster.ray.origin.copy(rayOrigin);
+        
+        // Look ahead for ground
         const moveY = this.velocity.y * delta;
         const lookAhead = Math.max(0, -moveY) + 0.2; 
         this.raycaster.far = 1.0 + lookAhead;
@@ -100,10 +95,16 @@ export class PlayerController {
         if (intersections.length > 0) {
             const hit = intersections[0];
             
-            // Only snap to floor if falling
+            // If we hit the floor while falling (or standing)
             if (this.velocity.y <= 0) {
+                // Snap to floor
                 this.player.position.y = hit.point.y; 
+                
+                // RESET ALL VELOCITY (Stop Instantly)
                 this.velocity.y = 0; 
+                this.velocity.x = 0; // <--- Stop Horizontal Momentum
+                this.velocity.z = 0; // <--- Stop Horizontal Momentum
+                
                 this.onGround = true;
             }
         }
