@@ -6,25 +6,49 @@
     <title>Portal Game</title>
     <link rel="stylesheet" href="./index.css"> 
 
-    <!-- <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.182.0/build/three.module.js"
-            }
-        }
-    </script> -->
-
     <script type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.182.0/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@0.182.0/examples/jsm/"
-    }
-  }
-</script>
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.182.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.182.0/examples/jsm/"
+        }
+      }
+    </script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
+        #start-btn:hover { background: white !important; color: black !important; }
+    </style>
 </head>
 
 <body>
+
+    <div id="ui-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; user-select: none; z-index: 10;">
+        
+        <div id="crosshair" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+            <div style="width: 4px; height: 4px; background: white; border-radius: 50%; box-shadow: 0 0 4px black;"></div>
+        </div>
+
+        <div id="portal-hud" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px;">
+            <div id="hud-blue" style="width: 40px; height: 40px; border: 3px solid #00aaff; border-radius: 50%; opacity: 0.2; transition: opacity 0.2s; box-shadow: 0 0 10px #00aaff;"></div>
+            <div id="hud-orange" style="width: 40px; height: 40px; border: 3px solid #ffaa00; border-radius: 50%; opacity: 0.2; transition: opacity 0.2s; box-shadow: 0 0 10px #ffaa00;"></div>
+        </div>
+    </div>
+
+    <div id="main-menu" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; z-index: 20;">
+        
+        <h1 style="font-size: 4rem; margin-bottom: 1rem; letter-spacing: 5px; text-transform: uppercase;">Portal JS</h1>
+        
+        <div style="margin-bottom: 3rem; text-align: center; color: #aaa; line-height: 1.6;">
+            <p><strong>WASD</strong> to Move • <strong>SPACE</strong> to Jump</p>
+            <p><strong>Left Click</strong>: Blue Portal • <strong>Right Click</strong>: Orange Portal</p>
+            <p><strong>Q / E</strong>: Switch Portals (or Pickup Cube)</p>
+        </div>
+
+        <button id="start-btn" style="padding: 15px 50px; font-size: 1.5rem; background: transparent; border: 2px solid white; color: white; cursor: pointer; transition: all 0.2s; text-transform: uppercase; letter-spacing: 2px;">
+            Start Test
+        </button>
+    </div>
 
     <script type="module" src="./main.js"></script>
     
