@@ -9,6 +9,7 @@ import { PortalSystem } from './portal_logic/portalSystem.js';
 import { PortalTeleport } from './portal_logic/portalTeleport.js'; // NEW: added
 import { PortalRenderer } from './portal_logic/PortalRender.js';
 import { CubeButtonRaycaster } from './portal_logic/CubeButtonRaycaster.js';
+import { audioManager, AudioManager } from './Controllers/AudioManager.js';
 
 // Level selection - change this to test different levels
 const CURRENT_LEVEL = 3; // 1, 2, or 3
@@ -93,6 +94,9 @@ window.addEventListener('resize', () => {
 });
 
 window.addEventListener('click', () => {
+  // Audio init
+  audioManager.init();
+
   // 1. Try to toggle Cube (Pickup/Drop)
   if (puzzle && puzzle.cube) {
     if (puzzle.cube.isHeld) {
@@ -111,6 +115,10 @@ window.addEventListener('click', () => {
   // 2. Shoot Portal (if not interacting with Cube)
   if (portalRaycaster.hitInfo) {
     const placedPortal = portalSystem.placePortal(portalRaycaster.hitInfo);
+
+    // Audio feedback
+    if (placedPortal === 'blue') audioManager.playPortalShoot('blue');
+    if (placedPortal === 'orange') audioManager.playPortalShoot('orange');
 
     // Update portal renderer when portals are placed
     if (placedPortal) {
