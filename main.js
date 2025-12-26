@@ -96,6 +96,7 @@ window.addEventListener('resize', () => {
 window.addEventListener('click', () => {
   // Audio init
   audioManager.init();
+  audioManager.startAmbientMusic();
 
   // 1. Try to toggle Cube (Pickup/Drop)
   if (puzzle && puzzle.cube) {
