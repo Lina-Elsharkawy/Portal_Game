@@ -11,77 +11,86 @@ export class AudioManager {
     this.musicNodes = []; 
   }
 
-  // --- NEW: Truth Check Function ---
   isMusicLoopActive() {
-    // 1. Is the engine actually running?
     if (this.ctx.state !== 'running') return false;
-    
-    // 2. Do we think we are playing?
     if (!this.isMusicPlaying) return false;
-
-    // 3. Do the nodes actually exist? (Prevents "Ghost" state)
     if (this.musicNodes.length === 0) return false;
-
     return true;
   }
-  // --------------------------------
 
   async init() {
-    // Force Resume (Wait for it!)
     if (this.ctx.state === 'suspended') {
-        try {
-            await this.ctx.resume();
-        } catch (e) {
-            console.warn("Audio Resume failed:", e);
-        }
+        try { await this.ctx.resume(); } catch (e) {}
     }
-
     this.enabled = true;
 
-    // Use our new check to decide if we need to start music
     if (!this.isMusicLoopActive()) {
         this.startAmbientMusic();
     }
   }
 
   startAmbientMusic() {
-    // Safety: Stop any potential duplicates first
     this.stopMusic();
 
-    console.log("🎵 Starting Music Loop...");
+    console.log("🎵 Starting Brown Noise Atmosphere...");
 
-    const osc1 = this.ctx.createOscillator();
-    const osc2 = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-
-    // 50Hz Settings
-    osc1.frequency.value = 130; 
-    osc2.frequency.value = 50; 
-    osc1.type = 'sine';
-    osc2.type = 'sine';
+    // 1. Create a buffer for 5 seconds of noise
+    const bufferSize = this.ctx.sampleRate * 5; 
+    const buffer = this.ctx.createBuffer(2, bufferSize, this.ctx.sampleRate);
     
-    gain.gain.value = 0.2; 
+    // 2. Generate Brown Noise (Soft, deep rumble)
+    // Brown noise is random, but each step is small relative to the last.
+    for (let channel = 0; channel < 2; channel++) {
+        const data = buffer.getChannelData(channel);
+        let lastOut = 0;
+        for (let i = 0; i < bufferSize; i++) {
+            // This math smoothes out the harshness of standard "white" noise
+            const white = Math.random() * 2 - 1;
+            lastOut = (lastOut + (0.02 * white)) / 1.02;
+            data[i] = lastOut * 3.5; // Multiply to compensate for gain loss
+        }
+    }
 
-    osc1.connect(gain);
-    osc2.connect(gain);
+    // 3. Create Source
+    const noiseSource = this.ctx.createBufferSource();
+    noiseSource.buffer = buffer;
+    noiseSource.loop = true;
+
+    // 4. Low Pass Filter (The "Inside a Helmet" effect)
+    // Cuts off everything above 150Hz. No hissing, just rumble.
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 150; 
+
+    // 5. Volume
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0.4; // Can be higher because noise is naturally quiet
+
+    // Connect
+    noiseSource.connect(filter);
+    filter.connect(gain);
     gain.connect(this.masterGain);
 
-    const now = this.ctx.currentTime;
-    osc1.start(now + 0.2);
-    osc2.start(now + 0.2);
+    noiseSource.start();
 
-    this.musicNodes = [osc1, osc2, gain];
+    // Store nodes
+    this.musicNodes = [noiseSource, filter, gain];
     this.isMusicPlaying = true;
   }
 
   stopMusic() {
     this.musicNodes.forEach(node => {
-      try { node.stop(); node.disconnect(); } catch(e){}
+      try { 
+        if(node.stop) node.stop(); 
+        node.disconnect(); 
+      } catch(e){}
     });
     this.musicNodes = [];
     this.isMusicPlaying = false;
   }
-  
+
+  // --- SFX ---
+
   playJump() {
     if (!this.enabled) return;
     const osc = this.ctx.createOscillator();
@@ -91,7 +100,7 @@ export class AudioManager {
     osc.type = 'square';
     osc.frequency.setValueAtTime(150, this.ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+    gain.gain.setValueAtTime(0.2, this.ctx.currentTime); // Lowered volume
     gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
     osc.start();
     osc.stop(this.ctx.currentTime + 0.1);
@@ -107,7 +116,7 @@ export class AudioManager {
     const startFreq = type === 'blue' ? 880 : 600; 
     osc.frequency.setValueAtTime(startFreq, this.ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.2);
-    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+    gain.gain.setValueAtTime(0.15, this.ctx.currentTime); 
     gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
     osc.start();
     osc.stop(this.ctx.currentTime + 0.2);
@@ -121,7 +130,7 @@ export class AudioManager {
     gain.connect(this.masterGain);
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(100, this.ctx.currentTime);
-    gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+    gain.gain.setValueAtTime(0.05, this.ctx.currentTime); // Very quiet
     gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
     osc.start();
     osc.stop(this.ctx.currentTime + 0.05);
@@ -136,7 +145,7 @@ export class AudioManager {
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(400, this.ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + 0.8);
-    gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+    gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.8);
     osc.start();
     osc.stop(this.ctx.currentTime + 0.8);
