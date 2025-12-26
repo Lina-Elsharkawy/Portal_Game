@@ -123,6 +123,27 @@ export class AudioManager {
     osc.start();
     osc.stop(this.ctx.currentTime + 0.05);
   }
+
+  playDeath() {
+    if (!this.enabled) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    // "Power Down" / Mario Death-style slide
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(400, this.ctx.currentTime); // Start mid-low
+    osc.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + 0.8); // Drop to bass
+
+    // Fade out
+    gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.8);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.8);
+  }
 }
 
 export const audioManager = new AudioManager();

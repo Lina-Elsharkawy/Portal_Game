@@ -192,6 +192,9 @@ function animate() {
       }
 
       if (died) {
+        // Play death sound
+        audioManager.playDeath();
+
         // Respawn player at level spawn point
         const spawn = (scene.userData && scene.userData.spawnPoint) ? scene.userData.spawnPoint.clone() : new THREE.Vector3(1, 1, 1);
         playerObj.position.copy(spawn);
