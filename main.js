@@ -306,6 +306,11 @@ function animate() {
           if (cameraController.player.velocity) cameraController.player.velocity.set(0, 0, 0);
           cameraController.player.onGround = true;
         }
+        // Remove placed portals and re-enable placement overlays on death/reset
+        if (typeof portalSystem.reset === 'function') portalSystem.reset();
+        if (typeof portalRenderer.updatePortalMeshes === 'function') {
+          portalRenderer.updatePortalMeshes(null, null, false, false);
+        }
         if (scene.userData && typeof scene.userData.handlePlayerDeath === 'function') {
           scene.userData.handlePlayerDeath();
         }
