@@ -71,8 +71,8 @@ export class DraggableCube {
 }
 
 export class FloorButton {
-    constructor(scene, position, doorToControl) {
-        this.door = doorToControl;
+    constructor(scene, position, callbacks) {
+        this.callbacks = callbacks || {};
         this.isPressed = false;
 
         // Load Model
@@ -93,23 +93,40 @@ export class FloorButton {
         scene.add(this.triggerZone);
     }
 
-    update(cubeMesh) {
-        if (!this.model) return;
+    update(playerPosition, cubeMesh) {
+        if (!playerPosition) {
+            console.warn("FloorButton.update: playerPosition is invalid");
+            return;
+        }
 
-        // Check distance to cube
-        const distance = this.triggerZone.position.distanceTo(cubeMesh.position);
+        // Check distance to player (primary trigger)
+        const distanceToPlayer = this.triggerZone.position.distanceTo(playerPosition);
 
-        if (distance < 3) { // Threshold
+        // Check distance to cube (secondary trigger)
+        let distanceToCube = Infinity;
+        if (cubeMesh && cubeMesh.position) {
+            distanceToCube = this.triggerZone.position.distanceTo(cubeMesh.position);
+        }
+
+        // Button activates if either player OR cube is close
+        const threshold = 2.5;
+        const isTriggered = distanceToPlayer < threshold || distanceToCube < threshold;
+
+        if (isTriggered) {
             if (!this.isPressed) {
                 this.isPressed = true;
-                this.door.open();
-                console.log("Button Pressed!");
+                if (this.callbacks.open) {
+                    this.callbacks.open();
+                    console.log("Button Pressed!");
+                }
             }
         } else {
             if (this.isPressed) {
                 this.isPressed = false;
-                this.door.close();
-                console.log("Button Released!");
+                if (this.callbacks.close) {
+                    this.callbacks.close();
+                    console.log("Button Released!");
+                }
             }
         }
     }

@@ -38,6 +38,17 @@ export function setupScene() {
         open: () => {
             scene.userData.ambientLight.intensity = 0.6;
             if (scene.userData.bulb1Glow) scene.userData.bulb1Glow.visible = true;
+            if (scene.userData.bulb2Glow) {
+                scene.userData.bulb2Glow.visible = true;
+                scene.userData.bulb2Light.intensity = 5;
+            }
+            if (scene.userData.bulb3Glow) {
+                scene.userData.bulb3Glow.visible = true;
+                scene.userData.bulb3Light.intensity = 5;
+            }
+        },
+        close: () => {
+            // Do nothing - lights stay on once activated
         }
     });
 
@@ -130,7 +141,8 @@ export function setupScene() {
     addBox(scene, roomX, 5, roomZ + 5.5, roomSize, 10, 1, createLabWallMaterial(), walls);
 
     // --- ROOM END WALL ---
-    addBox(scene, roomX + 15.5, 5, roomZ, 1, 10, TUNNEL_WIDTH + 1, createLabWallMaterial(), walls);
+    const endWall = addBox(scene, roomX + 15.5, 5, roomZ, 1, 10, TUNNEL_WIDTH + 1, createLabWallMaterial(), walls);
+    scene.userData.endWall = endWall;
 
     // --- 5. PUZZLE ELEMENTS ---
     const puzzleBlock = new DraggableCube(scene, new THREE.Vector3(roomX - 5, 2, roomZ));
@@ -145,9 +157,22 @@ export function setupScene() {
 
     const exitDoor = new Door(scene, new THREE.Vector3(roomX + 14, 2, roomZ));
 
+    // Light bulb in puzzle room
+    const bulb3 = createLightBulb(scene, new THREE.Vector3(roomX, 8, roomZ), 0xffff99);
+    scene.userData.bulb3Glow = bulb3.glow;
+    scene.userData.bulb3Light = bulb3.light;
+    bulb3.glow.visible = false;
+    bulb3.light.intensity = 0;
+
     const platformButton = new FloorButton(scene, new THREE.Vector3(ceilingPlatX, ceilingPlatY + 0.3, ceilingPlatZ), {
-        open: () => exitDoor.open(),
-        close: () => exitDoor.close()
+        open: () => {
+            exitDoor.open();
+            console.log("Door opening!");
+        },
+        close: () => {
+            exitDoor.close();
+            console.log("Door closing!");
+        }
     });
 
     scene.userData.handlePlayerDeath = () => {
