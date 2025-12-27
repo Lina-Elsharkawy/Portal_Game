@@ -248,6 +248,31 @@ function updateHUD() {
     }
 }
 
+// Visual underline for selected portal in HUD
+function updateHUDSelection() {
+  const hudBlueEl = document.getElementById('hud-blue');
+  const hudOrangeEl = document.getElementById('hud-orange');
+  if (!hudBlueEl || !hudOrangeEl) return;
+  const selected = portalSystem.currentPortal === 'blue' ? 'blue' : 'orange';
+  const blueUnderline = hudBlueEl.querySelector('.hud-underline');
+  const orangeUnderline = hudOrangeEl.querySelector('.hud-underline');
+  if (selected === 'blue') {
+    if (blueUnderline) blueUnderline.style.opacity = '1';
+    if (orangeUnderline) orangeUnderline.style.opacity = '0';
+  } else {
+    if (blueUnderline) blueUnderline.style.opacity = '0';
+    if (orangeUnderline) orangeUnderline.style.opacity = '1';
+  }
+}
+
+// Keep HUD selection in sync when player presses Q/E
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'q' || e.key === 'Q' || e.key === 'e' || e.key === 'E') {
+    // portalSystem.keyHandler also runs, but update HUD immediately
+    setTimeout(updateHUDSelection, 0);
+  }
+});
+
 const clock = new THREE.Clock();
 
 function animate() {
