@@ -86,22 +86,33 @@ export class PortalHalo {
     this.mesh.visible = true;
   }
 
-  animate(deltaTime) {
-    // STEP 5: Pulse Animation.
-    // This makes the glow "breathe" by changing its opacity over time using a Sine wave.
+  animate(deltaTime, playerPos = null) {
+    // STEP 5: Pulse Animation & Proximity Glow.
     if (!this.mesh.visible) return;
     this.animationTime += deltaTime;
-    const pulse = Math.sin(this.animationTime * 3) * 0.1 + 0.9;
-    if (this.glowMesh && this.mesh.visible) {
-      this.glowMesh.material.opacity = pulse * 0.3;
+
+    // Default pulse
+    let pulse = Math.sin(this.animationTime * 3) * 0.1 + 0.9;
+    let proximityFactor = 1.0;
+
+    // Calculate proximity boost if player position is provided
+    if (playerPos) {
+      const distance = this.mesh.position.distanceTo(playerPos);
+      // Increase glow intensity when player is within 6 meters
+      proximityFactor = THREE.MathUtils.clamp(1.0 + (6.0 - distance) * 0.15, 1.0, 2.0);
+    }
+
+    if (this.glowMesh) {
+      this.glowMesh.material.opacity = pulse * 0.3 * proximityFactor;
       this.glowMesh.rotation.z += deltaTime * 0.5;
     }
+
     // Animate overlay separately
     if (this.overlayMesh && this.overlayMesh.visible) {
-      // rotate the overlay for a subtle motion
       this.overlayMesh.rotation.z += deltaTime * 0.6;
-      // pulse overlay opacity a bit
-      if (this.overlayMesh.material) this.overlayMesh.material.opacity = 0.4 + Math.sin(this.animationTime * 2) * 0.15;
+      if (this.overlayMesh.material) {
+        this.overlayMesh.material.opacity = (0.4 + Math.sin(this.animationTime * 2) * 0.15) * proximityFactor;
+      }
     }
   }
 }

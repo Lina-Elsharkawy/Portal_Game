@@ -299,8 +299,9 @@ function animate() {
   portalRaycaster.update(camera, portalSurfaces);
 
   portalSystem.update(portalRaycaster.hitInfo);
-  portalSystem.blueHalo.animate(deltaTime);
-  portalSystem.orangeHalo.animate(deltaTime);
+  const playerPos = cameraController.getPlayer().position;
+  portalSystem.blueHalo.animate(deltaTime, playerPos);
+  portalSystem.orangeHalo.animate(deltaTime, playerPos);
 
   updateHUD();
 
