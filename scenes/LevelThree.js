@@ -11,6 +11,8 @@ export function setupScene() {
     scene.userData.spikes = [];
 
     // --- LIGHTING ---
+    // STEP 1: Ambient Light - Provides a soft "fill" light so shadows aren't pitch black.
+    // It affects every object in the scene equally.
     const ambientLight = new THREE.AmbientLight(0xffffff, 0);
     scene.add(ambientLight);
     scene.userData.ambientLight = ambientLight;
@@ -219,12 +221,23 @@ function addBox(scene, x, y, z, w, h, d, mat, colArray = null) {
 }
 
 function createLightBulb(scene, pos, color) {
-    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshStandardMaterial({ color: color, emissive: color, emissiveIntensity: 2 }));
+    // STEP 2: The static bulb model (Just a glowing sphere)
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshStandardMaterial({
+        color: color,
+        emissive: color, // Makes it look like it's glowing even without external light
+        emissiveIntensity: 2
+    }));
     bulb.position.copy(pos);
+
+    // STEP 3: The PointLight - This is what actually casts light on the walls.
+    // PointLight(color, intensity, distance)
     const light = new THREE.PointLight(color, 2, 50);
     light.position.copy(pos);
+
+    // STEP 4: A translucent "glow" mesh to simulate atmosphere around the bulb
     const glow = new THREE.Mesh(new THREE.SphereGeometry(1.2), new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.2 }));
     glow.position.copy(pos);
+
     scene.add(bulb, light, glow);
     return { bulb, light, glow };
 }

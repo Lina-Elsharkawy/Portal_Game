@@ -8,20 +8,23 @@ export class PortalStencilMask {
     // Radius should be inner radius
     const geometry = new THREE.CircleGeometry(radius, 64);
 
-    // Stencil material - only writes to stencil buffer
+    // STEP 1: Stencil material - only writes to stencil buffer
+    // It is "invisible" (colorWrite: false) but tags pixels on the screen.
     const material = new THREE.MeshBasicMaterial({
       colorWrite: false,
       depthWrite: false
     });
 
-    // Configure material for stencil writing
+    // STEP 2: Configure material for stencil writing
+    // THREE.AlwaysStencilFunc means "always pass the test"
+    // THREE.ReplaceStencilOp means "replace the value in the budget with stencilRef"
     material.stencilWrite = true;
     material.stencilFunc = THREE.AlwaysStencilFunc;
     material.stencilRef = 1;
     material.stencilZPass = THREE.ReplaceStencilOp;
 
     this.mesh = new THREE.Mesh(geometry, material);
-    this.mesh.renderOrder = -1; // Render before portal
+    this.mesh.renderOrder = -1; // STEP 3: Render BEFORE the portal mesh to "tag" the pixels
   }
 
   setPositionAndOrientation(position, normal) {

@@ -8,14 +8,17 @@ export class PortalMesh {
 
     const material = new THREE.ShaderMaterial({
       uniforms: {
+        // STEP 1: The 'map' is the texture rendered by the virtual camera at the other portal
         map: { value: renderTarget.texture },
+        // STEP 2: 'resolution' helps us map pixels to screen coordinates correctly
         resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-        // Add an exposure/brightness multiplier uniform
-        brightnessBoost: { value: 2.5 } // <--- Start with 2.0 or 2.5
+        // STEP 3: 'brightnessBoost' prevents the portal from looking too dark (compensates for light loss)
+        brightnessBoost: { value: 2.5 }
       },
       vertexShader: `
         varying vec4 vClipPosition;
         void main() {
+          // Standard projection: positions the portal on the wall in the 3D world
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
           vClipPosition = gl_Position;
         }
@@ -23,18 +26,18 @@ export class PortalMesh {
       fragmentShader: `
         uniform sampler2D map;
         uniform vec2 resolution;
-        uniform float brightnessBoost; // <--- Use the uniform
+        uniform float brightnessBoost;
         
         void main() {
-          // Calculate screen UV coordinates (0..1)
+          // STEP 4: Calculate where this pixel is on the user's screen (from 0 to 1)
+          // This makes the portal look like a "window" instead of a flat sticker
           vec2 screenUV = gl_FragCoord.xy / resolution;
           
-          // Sample the portal texture
+          // STEP 5: Grab the color from the other portal's camera view at this screen position
           vec4 color = texture2D(map, screenUV);
           
-          // --- LIGHTING FIX ---
-          // Multiply the color to counteract double-tone-mapping or light loss.
-          // Since this is a "window" (unlit), we control the emission directly.
+          // STEP 6: Apply the brightness boost and output the final pixel color
+          // We don't use standard lighting here because the portal is "emissive" (it shows another world)
           gl_FragColor = vec4(color.rgb * brightnessBoost, color.a);
         }
       `

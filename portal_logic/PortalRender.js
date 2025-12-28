@@ -114,23 +114,25 @@ export class PortalRenderer {
     // this.scene.environment = null;
     // this.scene.background = new THREE.Color(0x000000);
 
-    // === Render Blue Portal View ===
+    // STEP 1: Render the world as seen from the BLUE portal's perspective 
+    // This view is used as a texture for the ORANGE portal mesh.
     this.renderPortalView(
       playerCamera,
       bluePortalData,
       orangePortalData,
-      this.orangeCamera,
+      this.orangeCamera, // Virtual camera at the orange portal
       this.orangeRenderTarget,
       this.orangePortalMesh,
       this.orangeStencilMask
     );
 
-    // === Render Orange Portal View ===
+    // STEP 2: Render the world as seen from the ORANGE portal's perspective
+    // This view is used as a texture for the BLUE portal mesh.
     this.renderPortalView(
       playerCamera,
       orangePortalData,
       bluePortalData,
-      this.blueCamera,
+      this.blueCamera, // Virtual camera at the blue portal
       this.blueRenderTarget,
       this.bluePortalMesh,
       this.blueStencilMask

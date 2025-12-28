@@ -12,8 +12,7 @@ export class PortalCamera {
   updateFromPortals(playerCamera, sourcePortal, destPortal) {
     if (!sourcePortal || !destPortal) return;
 
-    // 1. Calculate Relative Transform Matrix (Source -> Destination)
-    // Destination Normal is inverted because we look OUT of it
+    // STEP 1: Calculate the source portal's coordinate system (where it is and where it faces)
     const sourceMatrix = new THREE.Matrix4();
     const sourceQuat = new THREE.Quaternion().setFromUnitVectors(
       new THREE.Vector3(0, 0, 1),
@@ -21,8 +20,7 @@ export class PortalCamera {
     );
     sourceMatrix.compose(sourcePortal.point, sourceQuat, new THREE.Vector3(1, 1, 1));
 
-    // We want to enter source opposite to normal, and exit destination matching normal
-    // But mathematically, standard "180 degree rotation" logic applies
+    // STEP 2: Calculate the destination portal's coordinate system
     const destMatrix = new THREE.Matrix4();
     const destQuat = new THREE.Quaternion().setFromUnitVectors(
       new THREE.Vector3(0, 0, 1),
@@ -30,19 +28,20 @@ export class PortalCamera {
     );
     destMatrix.compose(destPortal.point, destQuat, new THREE.Vector3(1, 1, 1));
 
-    // Transform: Dest * Rotation(PI_Y) * Inverse(Source)
-    // This maps points relative to Source to points relative to Dest, with 180 flip
+    // STEP 3: Create a "Rotation Matrix" (180 degrees) because we want to look 
+    // OUT of the second portal in the opposite direction we entered the first.
     const rotationMatrix = new THREE.Matrix4().makeRotationY(Math.PI);
     const inverseSource = new THREE.Matrix4().copy(sourceMatrix).invert();
 
-    // Full Transform Matrix
+    // STEP 4: Combine them into a "Relative Transform Matrix"
+    // This matrix "teleports" any point in front of Portal A to the same relative point in front of Portal B
     const portalRecurseMatrix = new THREE.Matrix4()
       .multiply(destMatrix)
       .multiply(rotationMatrix)
       .multiply(inverseSource);
 
-    // 2. Set Virtual Camera Position/Rotation
-    // Instead of decomposed lookAt, we apply the matrix to the player camera's world matrix
+    // STEP 5: Apply this matrix to the player camera's world position
+    // This moves our "virtual camera" to where it should be looking out from the destination portal
     this.camera.matrixAutoUpdate = false;
     this.camera.matrixWorld.copy(portalRecurseMatrix).multiply(playerCamera.matrixWorld);
     this.camera.matrixWorldInverse.copy(this.camera.matrixWorld).invert();
@@ -54,25 +53,19 @@ export class PortalCamera {
     this.camera.far = playerCamera.far;
     this.camera.updateProjectionMatrix();
 
-    // 4. Oblique Near Plane Clipping
-    // We need the destination portal plane in Camera Space
-    // Plane: Normal pointing OUT of portal (into the room we are rendering) -> destPortal.normal
-    // Point: destPortal.point
-    // BUT we need it in the Virtual Camera's View Space.
-
-    // Helper to get plane in camera space
+    // STEP 6: "Oblique Near Plane Clipping" (A bit advanced)
+    // We want to cut off any 3D models that are sitting BETWEEN our virtual camera 
+    // and the destination portal (like the wall the portal is on).
+    // This ensures only the scene "inside" the portal is rendered.
     const clipPlane = new THREE.Plane();
     const normal = destPortal.normal.clone();
     const point = destPortal.point.clone();
 
-    // Transform plane to camera space
-    // Plane equation: Nx*x + Ny*y + Nz*z + d = 0
-    // d = -dot(Normal, Point)
+    // Transform the destination portal's plane into the virtual camera's space
     clipPlane.setFromNormalAndCoplanarPoint(normal, point);
     clipPlane.applyMatrix4(this.camera.matrixWorldInverse);
 
-    // Check if camera is behind plane (shouldn't happen with standard logic but good safety)
-    // Modify projection matrix (Oblique Frustum)
+    // Call the helper to modify the camera's projection matrix
     this.makeObliqueProjection(this.camera.projectionMatrix, clipPlane);
   }
 
